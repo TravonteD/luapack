@@ -5,7 +5,7 @@ local progress = {}
 local buffer = vim.fn.bufnr('luaplug-test', true)
 
 local function cd(dir)
-  api.nvim_command('silent cd '..dir)
+  vim.cmd('silent cd '..dir)
 end
 
 local function package_dir()
@@ -50,14 +50,14 @@ local function runjob(cmd, cwd, line)
     cmd = cmd,
     cwd = cwd,
     on_exit = function(code, signal)
-      api.nvim_command((line+1)..'s:.*:&Done')
+      vim.cmd((line+1)..'s:.*:&Done')
     end
   }).start()
 end
 
 local function init_display()
   api.nvim_buf_set_lines(buffer, vim.fn.line('^'), vim.fn.line('$'), false, {})
-  api.nvim_command('vsplit | buffer '..buffer)
+  vim.cmd('vsplit | buffer '..buffer)
 end
 
 local function download_plugin(plugin, install_type, line)
@@ -71,7 +71,7 @@ local function update_helptags()
   cd(package_dir())
   local list = installed_plugins()
   for item, _ in pairs(list) do
-    -- api.nvim_command('helptags '..item..'/doc')
+    -- vim.cmd('helptags '..item..'/doc')
   end
 end
 
@@ -82,7 +82,7 @@ end
 local function plugin_list()
   local result = {}
   for _, plugin in pairs(M.plugins) do
-    local name = get_name(plugin)
+    local name = get_name(plugin[1])
     if plugin[2] and plugin[2] == 'start' then
       result['start/'..name] = true
     else
@@ -99,7 +99,7 @@ function M.update()
   validate_dirs()
 
   local plugins = installed_plugins()
-  api.nvim_command('vsplit | buffer '..buffer)
+  vim.cmd('vsplit | buffer '..buffer)
   for plugin ,_ in pairs(plugins) do
     local line = vim.fn.getbufinfo(buffer)[1].linecount
     vim.fn.append(line, 'Updating '..plugin..'...')
@@ -131,7 +131,7 @@ function M.clean()
       return
   end
 
-  api.nvim_command('vsplit | buffer '..buffer)
+  vim.cmd('vsplit | buffer '..buffer)
   for _, item in pairs(removable) do
       local line = vim.fn.getbufinfo(buffer)[1].linecount
       vim.fn.append(line, 'Removing '..item..'...')
@@ -150,7 +150,7 @@ function M.install()
 
   local installed = installed_plugins()
 
-  api.nvim_command('vsplit | buffer '..buffer)
+  vim.cmd('vsplit | buffer '..buffer)
   for _, plugin in pairs(M.plugins) do
     local line = vim.fn.getbufinfo(buffer)[1].linecount
     local itype = (plugin[2] and plugin[2] == 'start' and 'start' or 'opt')
@@ -170,7 +170,9 @@ function M.load()
     local itype = (plugin[2] and plugin[2] == 'start' and 'start' or 'opt')
     local name = get_name(plugin[1])
     if installed[itype..'/'..name] then
-      api.nvim_command('packadd '..name)
+      vim.cmd('packadd '..name)
     end
   end
 end
+
+return M
