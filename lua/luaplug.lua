@@ -71,7 +71,7 @@ local function update_helptags()
   cd(package_dir())
   local list = installed_plugins()
   for item, _ in pairs(list) do
-    -- vim.cmd('helptags '..item..'/doc')
+     vim.cmd('helptags '..item..'/doc')
   end
 end
 
