@@ -9,8 +9,8 @@ local progress = {
 M.plugins = {}
 M.plugin_dir = '~/.local/share/nvim/site'
 
-local buffer = vim.fn.bufnr('luaplug-test', true)
-local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luaplug'
+local buffer = vim.fn.bufnr('luapack', true)
+local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luapack'
 local opt_dir = package_dir .. '/opt'
 local start_dir = package_dir .. '/start'
 
@@ -79,8 +79,12 @@ local function validate_dirs()
     return
   end
 
-  if vim.fn.isdirectory(package_dir) == 0 then
-    local a  = vim.fn.system('mkdir -p '..M.plugin_dir..'/pack/luaplug/{opt,start}')
+  if vim.fn.isdirectory(opt_dir) == 0 then
+    local a  = vim.fn.system('mkdir -p '..M.plugin_dir..'/pack/luapack/opt')
+  end
+
+  if vim.fn.isdirectory(start_dir) == 0 then
+    local a  = vim.fn.system('mkdir -p '..M.plugin_dir..'/pack/luapack/start')
   end
 end
 
