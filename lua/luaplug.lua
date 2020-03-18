@@ -1,34 +1,69 @@
 local job = require('luajob')
 local api = vim.api
 local M = {}
-local progress = {}
+local progress = { 
+  started = 0, 
+  completed = 0 
+}
+
+M.plugins = {}
+M.plugin_dir = '~/.local/share/nvim/site'
+
 local buffer = vim.fn.bufnr('luaplug-test', true)
+local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luaplug'
+local opt_dir = package_dir .. '/opt'
+local start_dir = package_dir .. '/start'
 
-local function cd(dir)
-  vim.cmd('silent cd '..dir)
-end
-
-local function package_dir()
-  return vim.fn.expand(M.plugin_dir) .. '/pack/luaplug'
-end
-
-local function opt_dir()
-  return package_dir() .. '/opt'
-end
-
-local function start_dir()
-  return package_dir() .. '/start'
-end
+local display = {
+  init = function()
+    vim.cmd('vsplit | buffer '..buffer..' | normal! ggdG')
+    vim.fn.appendbufline(buffer, 0, "Updating Plugins")
+    vim.fn.appendbufline(buffer, 1, "[          ]")
+  end,
+  update = function()
+    local bar
+    local percentage = (progress.started/progress.completed)
+    if percentage == 1 then
+      bar = '=========='
+    elseif percentage > 0.9 then
+      bar = '========= '
+    elseif percentage > 0.8 then
+      bar = '========  '
+    elseif percentage > 0.7 then
+      bar = '=======   '
+    elseif percentage > 0.6 then
+      bar = '======    '
+    elseif percentage > 0.5 then
+      bar = '=====     '
+    elseif percentage > 0.4 then
+      bar = '====      '
+    elseif percentage > 0.3 then
+      bar = '===       '
+    elseif percentage > 0.2 then
+      bar = '==        '
+    elseif percentage > 0.1 then
+      bar = '=         '
+    end
+    vim.cmd(':1s:.*:Updating Plugins ('..progress.started..'/'..progress.completed..')')
+    vim.cmd(':2s:.*:['..bar..']')
+    if percentage == 1 then
+        vim.fn.append(vim.fn.line('$'), 'Finishing...Done')
+    end
+  end
+}
 
 local function installed_plugins()
-  local list = {}
-  local opt_plugins = vim.fn.split(vim.fn.system('ls '..opt_dir()), '\n')
-  local start_plugins = vim.fn.split(vim.fn.system('ls '..start_dir()), '\n')
+  local list = {
+    opt = {},
+    start = {}
+  }
+  local opt_plugins = vim.fn.split(vim.fn.system('ls '..opt_dir), '\n')
+  local start_plugins = vim.fn.split(vim.fn.system('ls '..start_dir), '\n')
   for _,i in pairs(opt_plugins) do
-    list['opt/'..i] = true
+    list.opt[i] = true
   end
   for _,i in pairs(start_plugins) do
-    list['start/'..i] = true
+    list.start[i] = true
   end
   return list
 end
@@ -43,35 +78,45 @@ local function validate_dirs()
     print('Plugin Dir Does Not Exist')
     return
   end
+
+  if vim.fn.isdirectory(package_dir) == 0 then
+    local a  = vim.fn.system('mkdir -p '..M.plugin_dir..'/pack/luaplug/{opt,start}')
+  end
 end
 
-local function runjob(cmd, cwd, line)
+local function runjob(cmd, cwd)
   job:new({
     cmd = cmd,
     cwd = cwd,
-    on_exit = function(code, signal)
-      vim.cmd((line+1)..'s:.*:&Done')
+    on_exit = function()
+      progress.completed = progress.completed + 1
+      display.update()
     end
   }).start()
 end
 
-local function init_display()
-  api.nvim_buf_set_lines(buffer, vim.fn.line('^'), vim.fn.line('$'), false, {})
-  vim.cmd('vsplit | buffer '..buffer)
-end
-
-local function download_plugin(plugin, install_type, line)
+local function download_plugin(plugin, install_type)
   local repo = ('https://github.com/'..plugin)
   local cmd = ('git clone --progress '..repo)
-  local cwd = (install_type == 'opt') and opt_dir() or start_dir()
-  runjob(cmd, cwd, line)
+  local cwd = (install_type == 'opt') and opt_dir or start_dir
+  progress.started = progress.started + 1
+  runjob(cmd, cwd)
+  vim.fn.append(vim.fn.line('$'), 'Downloading '..plugin..'...')
 end
 
 local function update_helptags()
-  cd(package_dir())
   local list = installed_plugins()
-  for item, _ in pairs(list) do
-     vim.cmd('helptags '..item..'/doc')
+  for item, _ in pairs(list.opt) do
+    local dir = opt_dir..'/'..item..'/doc'
+    if vim.fn.isdirectory(vim.fn.expand(dir)) == 1 then
+      vim.cmd('helptags '..dir)
+    end
+  end
+  for item, _ in pairs(list.start) do
+    local dir = start_dir..'/'..item..'/doc'
+    if vim.fn.isdirectory(vim.fn.expand(dir)) == 1 then
+      vim.cmd('helptags '..dir)
+    end
   end
 end
 
@@ -79,44 +124,48 @@ local function get_name(plugin)
   return plugin:gsub('.*/', '')
 end
 
-local function plugin_list()
+local function defined_plugins()
   local result = {}
   for _, plugin in pairs(M.plugins) do
-    local name = get_name(plugin[1])
-    if plugin[2] and plugin[2] == 'start' then
-      result['start/'..name] = true
-    else
-      result['opt/'..name] = true
-    end
+    result[get_name(plugin[1])] = true
   end
   return result
 end
 
-
-M.plugin_dir = '~/.local/share/nvim/site'
-
 function M.update()
   validate_dirs()
 
+  display.init()
   local plugins = installed_plugins()
-  vim.cmd('vsplit | buffer '..buffer)
-  for plugin ,_ in pairs(plugins) do
-    local line = vim.fn.getbufinfo(buffer)[1].linecount
-    vim.fn.append(line, 'Updating '..plugin..'...')
-    cwd = package_dir()..'/'..plugin
-    cmd = 'git pull'
-    runjob(cmd, cwd, line)
+  for plugin ,_ in pairs(plugins.opt) do
+    local cwd = opt_dir..'/'..plugin
+    local cmd = 'git pull'
+    progress.started = progress.started + 1
+    vim.fn.append(vim.fn.line('$'), 'Updating '..plugin..'...')
+    runjob(cmd, cwd)
+  end
+  for plugin ,_ in pairs(plugins.start) do
+    local cwd = start_dir..'/'..plugin
+    local cmd = 'git pull'
+    progress.started = progress.started + 1
+    vim.fn.append(vim.fn.line('$'), 'Updating '..plugin..'...')
+    runjob(cmd, cwd)
   end
 end
 
 function M.clean()
-  local defined = plugin_list()
+  local defined = defined_plugins()
   local list = installed_plugins()
   local removable = {}
 
-  for item, _ in pairs(list) do
+  for item, _ in pairs(list.opt) do
     if not defined[item] then
-      table.insert(removable, item)
+      table.insert(removable, ('opt/'..item))
+    end
+  end
+  for item, _ in pairs(list.start) do
+    if not defined[item] then
+      table.insert(removable, ('start/'..item))
     end
   end
 
@@ -125,41 +174,32 @@ function M.clean()
     return
   end
 
-  local choice = vim.fn.input('Remove unused directories? [Y/n]')
+  local text = table.concat(removable, '\n')
+  local choice = vim.fn.input(text..'\nRemove unused plugins? [Y/n]')
   if choice == 'n' then
       print('Aborted...')
       return
   end
 
-  vim.cmd('vsplit | buffer '..buffer)
+  display.init()
   for _, item in pairs(removable) do
-      local line = vim.fn.getbufinfo(buffer)[1].linecount
-      vim.fn.append(line, 'Removing '..item..'...')
       cmd = 'rm -rf '..item
-      runjob(cmd, nil, line)
+      progress.started = progress.started + 1
+      vim.fn.append(vim.fn.line('$'), 'Deleting '..item..'...')
+      runjob(cmd, package_dir)
   end
 end
 
 function M.install()
   validate_dirs()
 
-  if vim.fn.isdirectory(package_dir()) == 0 then
-    cd(M.plugin_dir)
-    local a  = vim.fn.system('mkdir -p pack/luaplug/{opt,start}')
-  end
-
+  display.init()
   local installed = installed_plugins()
-
-  vim.cmd('vsplit | buffer '..buffer)
   for _, plugin in pairs(M.plugins) do
-    local line = vim.fn.getbufinfo(buffer)[1].linecount
     local itype = (plugin[2] and plugin[2] == 'start' and 'start' or 'opt')
-    if installed[itype..'/'..get_name(plugin[1])] then
-      goto continue
+    if not installed[itype][get_name(plugin[1])] then
+      download_plugin(plugin[1], itype)
     end
-    vim.fn.append(line, 'Downloading '..plugin[1]..'...')
-    download_plugin(plugin[1], itype, line)
-    ::continue::
   end
   update_helptags()
 end
@@ -169,7 +209,7 @@ function M.load()
   for _, plugin in pairs(M.plugins) do
     local itype = (plugin[2] and plugin[2] == 'start' and 'start' or 'opt')
     local name = get_name(plugin[1])
-    if installed[itype..'/'..name] then
+    if installed[itype][name] then
       vim.cmd('packadd '..name)
     end
   end
