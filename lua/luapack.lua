@@ -10,9 +10,9 @@ M.plugins = {}
 M.plugin_dir = '~/.local/share/nvim/site'
 
 local buffer = vim.fn.bufnr('luapack', true)
-api.buf_set_option(buffer, 'buftype', 'nofile')
-api.buf_set_option(buffer, 'bufhidden', 'hide')
-api.buf_set_option(buffer, 'swapfile', 'false')
+api.nvim_buf_set_option(buffer, 'buftype', 'nofile')
+api.nvim_buf_set_option(buffer, 'bufhidden', 'hide')
+api.nvim_buf_set_option(buffer, 'swapfile', 'false')
 
 local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luapack'
 local opt_dir = package_dir .. '/opt'
@@ -145,19 +145,18 @@ function M.update()
 
   display.init()
   local plugins = installed_plugins()
-  for plugin ,_ in pairs(plugins.opt) do
-    local cwd = opt_dir..'/'..plugin
+  local process_loop = function(plugin, dir)
+    local cwd = dir..'/'..plugin
     local cmd = 'git pull'
     progress.started = progress.started + 1
     vim.fn.append(vim.fn.line('$'), 'Updating '..plugin..'...')
     runjob(cmd, cwd)
   end
+  for plugin ,_ in pairs(plugins.opt) do
+    process_loop(plugin, opt_dir)
+  end
   for plugin ,_ in pairs(plugins.start) do
-    local cwd = start_dir..'/'..plugin
-    local cmd = 'git pull'
-    progress.started = progress.started + 1
-    vim.fn.append(vim.fn.line('$'), 'Updating '..plugin..'...')
-    runjob(cmd, cwd)
+    process_loop(plugin, start_dir)
   end
 end
 
@@ -165,6 +164,8 @@ function M.clean()
   local defined = defined_plugins()
   local list = installed_plugins()
   local removable = {}
+  local process_loop = function()
+  end
 
   for item, _ in pairs(list.opt) do
     if not defined[item] then
