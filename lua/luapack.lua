@@ -10,6 +10,10 @@ M.plugins = {}
 M.plugin_dir = '~/.local/share/nvim/site'
 
 local buffer = vim.fn.bufnr('luapack', true)
+api.buf_set_option(buffer, 'buftype', 'nofile')
+api.buf_set_option(buffer, 'bufhidden', 'hide')
+api.buf_set_option(buffer, 'swapfile', 'false')
+
 local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luapack'
 local opt_dir = package_dir .. '/opt'
 local start_dir = package_dir .. '/start'
@@ -22,7 +26,7 @@ local display = {
   end,
   update = function()
     local bar
-    local percentage = (progress.started/progress.completed)
+    local percentage = (progress.completed/progress.started)
     if percentage == 1 then
       bar = '=========='
     elseif percentage > 0.9 then
@@ -44,7 +48,7 @@ local display = {
     elseif percentage > 0.1 then
       bar = '=         '
     end
-    vim.cmd(':1s:.*:Updating Plugins ('..progress.started..'/'..progress.completed..')')
+    vim.cmd(':1s:.*:Updating Plugins ('..progress.completed..'/'..progress.started..')')
     vim.cmd(':2s:.*:['..bar..']')
     if percentage == 1 then
         vim.fn.append(vim.fn.line('$'), 'Finishing...Done')
