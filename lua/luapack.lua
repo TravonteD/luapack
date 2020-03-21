@@ -12,7 +12,7 @@ M.plugin_dir = '~/.local/share/nvim/site'
 local buffer = vim.fn.bufnr('luapack', true)
 api.nvim_buf_set_option(buffer, 'buftype', 'nofile')
 api.nvim_buf_set_option(buffer, 'bufhidden', 'hide')
-api.nvim_buf_set_option(buffer, 'swapfile', 'false')
+api.nvim_buf_set_option(buffer, 'swapfile', false)
 
 local package_dir = vim.fn.expand(M.plugin_dir) .. '/pack/luapack'
 local opt_dir = package_dir .. '/opt'
