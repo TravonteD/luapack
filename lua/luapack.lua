@@ -101,7 +101,7 @@ end
 
 local function download_plugin(plugin, install_type)
   local repo = ('https://github.com/'..plugin)
-  local cmd = ('git clone --progress '..repo)
+  local cmd = ('git clone '..repo)
   local cwd = (install_type == 'opt') and opt_dir or start_dir
   progress.started = progress.started + 1
   runjob(cmd, cwd)
