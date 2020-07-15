@@ -91,6 +91,18 @@ local function run_cmd(cmd, name)
   jobs[job_id] = name
 end
 
+local function load_helptags()
+  for _, plugin in ipairs(installed_plugins()) do
+    local plugpath = Luapack.plugin_dir..plugin
+    local dir = vim.fn.readdir(plugpath)
+    if vim.fn.index(dir, 'doc') ~= -1 then
+      if vim.fn.index(vim.fn.readdir(plugpath..'/doc'), 'tags') == -1 then
+        vim.cmd(('helptags ++t %s'):format(plugpath..'/doc'))
+      end
+    end
+  end
+end
+
 Luapack.install = function()
   ensure_plugin_dir()
   vim.cmd(([[vsplit | b%s]]):format(buffer))
@@ -112,6 +124,7 @@ Luapack.update = function()
       local shell_cmd = ('cd %s && git pull'):format(Luapack.plugin_dir..get_repo_name(x))
       run_cmd(shell_cmd, get_repo_name(x))
   end
+  load_helptags()
 end
 
 Luapack.clean = function()
@@ -136,6 +149,7 @@ Luapack.clean = function()
     local shell_cmd = ('rm -fr %s'):format(Luapack.plugin_dir..plugin)
     run_cmd(shell_cmd, plugin)
   end
+  load_helptags()
 end
 
 Luapack.load = function()
