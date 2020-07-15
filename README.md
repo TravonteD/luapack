@@ -23,6 +23,14 @@ EOF
 ### Defining Plugins
 
 #### Simple configuration
+First in your init.vim do 
+
+```vim
+packadd luapack
+```
+
+This needs to be before any configuration that requires Luapack to be loaded
+
 ```lua
 -- We use a global variable here so that we can re-use the same object throughout the configuration
 Luapack = require('luapack')
@@ -33,16 +41,6 @@ Luapack.plugins = {
 Luapack.load()
 ```
 
-By default Luapack will install plugins into the 'opt' directory so that they can be loaded in explicitly. If you want to have a plugin installed in the 'start' directory, add it to the declaration table. 
-
-Ex.
-```lua
-Luapack.plugins = {
-  { 'travonted/luapack', start = true },
-}
-```
-
-
 ### Installing,Updating, and Cleaning Plugins
 
 Call the appropriate function on the Luapack object that you defined
@@ -50,5 +48,4 @@ Call the appropriate function on the Luapack object that you defined
 `:lua Luapack.install()`
 `:lua Luapack.update()`
 `:lua Luapack.clean()`
-
 
