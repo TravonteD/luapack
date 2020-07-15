@@ -3,6 +3,8 @@
 Luapack is a package manager that utilizes Neovim's built in packaging system (see `:h packages` for more information). It is intended for use with a primarily Lua configuration.
 
 ## Installation
+### Before installing please read!! Luapack uses features from the latest neovim-nightly, it will *_not_* work if you are not on the latest build.
+
 Using git:
 
 Clone the repository into your preferred package directory under 'luapack/opt/luapack'
