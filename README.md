@@ -37,8 +37,8 @@ This needs to be before any configuration that requires Luapack to be loaded
 -- We use a global variable here so that we can re-use the same object throughout the configuration
 Luapack = require('luapack')
 Luapack.plugins = {
-  { 'travonted/luapack' },
-  { 'travonted/luajob' }
+   'travonted/luapack',
+   'travonted/luajob'
 }
 Luapack.load()
 ```
