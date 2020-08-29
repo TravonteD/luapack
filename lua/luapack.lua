@@ -1,36 +1,32 @@
--- luacheck: globals vim
 local Luapack = {}
 local buffer = vim.api.nvim_create_buf(false, true)
 local statuses = {}
 local jobs = {}
 local status_count = 0
-
-Luapack.plugins = {}
-
-Luapack.plugin_dir = ('%s/.local/share/nvim/site/pack/luapack/opt/'):format(os.getenv('HOME'))
-
+do
+  local _0_0 = Luapack
+  _0_0["plugins"] = {}
+  _0_0["plugin_dir"] = string.format("%s/.local/share/nvim/site/pack/luapack/opt/", os.getenv("HOME"))
+end
 local function ensure_plugin_dir()
-  if vim.fn.isdirectory(Luapack.plugin_dir) == 0 then
-    vim.fn.mkdir(Luapack.plugin_dir, 'p')
+  if (vim.fn.isdirectory(Luapack.plugin_dir) == 0) then
+    return vim.fn.mkdir(Luapack.plugin_dir, "p")
   end
 end
-
 local function installed_plugins()
   return vim.fn.readdir(Luapack.plugin_dir)
 end
-
 local function get_repo_name(str)
-  return str:gsub('.*/(.*)', '%1')
+  return str:gsub(".*/(.*)", "%1")
 end
-
 local function get_needed_plugins()
   local already_installed = installed_plugins()
   local to_be_installed = {}
   for _, plugin in ipairs(Luapack.plugins) do
     local needed = false
-    for _, x in ipairs(already_installed) do
-      if x == get_repo_name(plugin) then
-         needed = true
+    for _0, x in ipairs(already_installed) do
+      if (x == get_repo_name(plugin)) then
+        needed = true
       end
     end
     if not needed then
@@ -39,100 +35,88 @@ local function get_needed_plugins()
   end
   return to_be_installed
 end
-
 local function redraw()
   local lines = {}
   for plugin, status in pairs(statuses) do
-    if status == 'deleting' then
-      table.insert(lines, ('Deleting %s'):format(plugin))
-      goto continue
+    do
+      local _1_0 = status
+      if (_1_0 == "deleting") then
+        table.insert(lines, string.format("Deleting %s", plugin))
+      elseif (_1_0 == "updating") then
+        table.insert(lines, string.format("Updating %s", plugin))
+      elseif (_1_0 == "downloading") then
+        table.insert(lines, string.format("Downloading %s", plugin))
+      elseif (_1_0 == "deleting_done") then
+        table.insert(lines, string.format("Deleting %s...done", plugin))
+      elseif (_1_0 == "updating_done") then
+        table.insert(lines, string.format("Updating %s...done", plugin))
+      elseif (_1_0 == "downloading_done") then
+        table.insert(lines, string.format("Downloading %s...done", plugin))
+      elseif (_1_0 == "error") then
+        table.insert(lines, string.format("Downloading %s...error", plugin))
+      end
     end
-    if status == 'updating' then
-      table.insert(lines, ('Updating %s'):format(plugin))
-      goto continue
-    end
-    if status == 'downloading' then
-      table.insert(lines, ('Downloading %s'):format(plugin))
-      goto continue
-    end
-    if status == 'deleting_done' then
-      table.insert(lines, ('Deleting %s...done'):format(plugin))
-      goto continue
-    end
-    if status == 'updating_done' then
-      table.insert(lines, ('Updating %s...done'):format(plugin))
-      goto continue
-    end
-    if status == 'downloading_done' then
-      table.insert(lines, ('Downloading %s...done'):format(plugin))
-      goto continue
-    end
-    if status == 'error' then
-      table.insert(lines, ('Downloading %s...error'):format(plugin))
-      goto continue
-    end
-    :: continue ::
+    vim.api.nvim_buf_set_lines(buffer, 0, status_count, false, lines)
   end
-  vim.api.nvim_buf_set_lines(buffer, 0, status_count, false, lines)
+  return nil
 end
-
 local function run_cmd(cmd, name)
-  local job_id = vim.fn.jobstart(cmd, {
-      on_exit = function(id, code, _)
-        local name = jobs[id]
-        if code == 0 then
-          statuses[name] = ('%s_done'):format(statuses[name])
-        else
-          statuses[name] = 'error'
-        end
-        redraw()
-      end
-  })
+  local job_id = nil
+  local function _1_(id, code, _)
+    local name0 = jobs[id]
+    if (code == 0) then
+      statuses[name0] = string.format("%s_done", status.name)
+    else
+      statuses[name0] = "error"
+    end
+    return redraw()
+  end
+  job_id = vim.fn.jobstart(cmd, {on_exit = _1_})
   jobs[job_id] = name
+  return nil
 end
-
 local function load_helptags()
-  for _, plugin in ipairs(installed_plugins()) do
-    local plugpath = Luapack.plugin_dir..plugin
+  for _, plugin in ipairs(installed_plugins) do
+    local plugpath = (Luapack.plugin_dir .. plugin)
     local dir = vim.fn.readdir(plugpath)
-    if vim.fn.index(dir, 'doc') ~= -1 then
-      if vim.fn.index(vim.fn.readdir(plugpath..'/doc'), 'tags') == -1 then
-        vim.cmd(('helptags ++t %s'):format(plugpath..'/doc'))
+    if (vim.fn.index(dir, "doc") ~= -1) then
+      if (vim.fn.index(vim.fn.readdir((plugpath .. "/doc")), "tags") == -1) then
+        vim.cmd(string.format("helptags ++t %s", (plugpath .. "/doc")))
       end
     end
   end
+  return nil
 end
-
+local function update_status(name, status)
+  statuses[name] = status
+  status_count = (status_count + 1)
+  return redraw()
+end
 Luapack.install = function()
   ensure_plugin_dir()
-  vim.cmd(([[vsplit | b%s]]):format(buffer))
+  vim.cmd(string.format("vsplit | b%s", buffer))
   for _, x in ipairs(get_needed_plugins()) do
-      statuses[get_repo_name(x)] = 'downloading'
-      status_count = status_count + 1
-      redraw()
-      local shell_cmd = ('git clone https://github.com/%s %s'):format(x, Luapack.plugin_dir..get_repo_name(x))
-      run_cmd(shell_cmd, get_repo_name(x))
+    update_status(get_repo_name(x), "downloading")
+    local shell_cmd = string.format("git clone https://github.com/%s %s", (Luapack.plugin_dir .. get_repo_name(x)))
+    run_cmd(shell_cmd, get_repo_name(x))
   end
+  return nil
 end
-
 Luapack.update = function()
-  vim.cmd(([[vsplit | b%s]]):format(buffer))
-  for _, x in ipairs(installed_plugins()) do
-      statuses[get_repo_name(x)] = 'updating'
-      status_count = status_count + 1
-      redraw()
-      local shell_cmd = ('cd %s && git pull'):format(Luapack.plugin_dir..get_repo_name(x))
-      run_cmd(shell_cmd, get_repo_name(x))
+  vim.cmd(string.format("vsplit | b%s", buffer))
+  for _, x in ipairs(get_needed_plugins()) do
+    update_status(get_repo_name(x), "updating")
+    local shell_cmd = string.format("cd %s && git pull", (Luapack.plugin_dir .. get_repo_name(x)))
+    run_cmd(shell_cmd, get_repo_name(x))
   end
-  load_helptags()
+  return nil
 end
-
 Luapack.clean = function()
   local plugins_to_remove = {}
   for _, plugin in ipairs(installed_plugins()) do
     local to_delete = true
-    for _, x in ipairs(plugins) do
-      if plugin == get_repo_name(x) then
+    for _0, x in ipairs(plugins) do
+      if (plugin == get_repo_name(x)) then
         to_delete = false
       end
     end
@@ -140,22 +124,18 @@ Luapack.clean = function()
       table.insert(plugins_to_remove, plugin)
     end
   end
-
-  vim.cmd(([[vsplit | b%s]]):format(buffer))
-  for _, plugin in ipairs(plugins_to_remove) do
-    statuses[plugin] = 'deleting'
-    status_count = status_count + 1
-    redraw()
-    local shell_cmd = ('rm -fr %s'):format(Luapack.plugin_dir..plugin)
+  vim.cmd(string.format("vsplit | b%s", buffer))
+  for _, plugin in ipairs(plugins_to_remove()) do
+    update_status(plugin, "deleting")
+    local shell_cmd = string.format("rm -fr %s", (Luapack.plugin_dir .. plugin))
     run_cmd(shell_cmd, plugin)
   end
-  load_helptags()
+  return nil
 end
-
 Luapack.load = function()
   for _, plugin in ipairs(installed_plugins()) do
-    vim.cmd(('packadd %s'):format(plugin))
+    vim.cmd(string.format("packadd %s", plugin))
   end
+  return nil
 end
-
 return Luapack
