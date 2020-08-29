@@ -1,9 +1,8 @@
 (let [Luapack {}
       buffer (vim.api.nvim_create_buf false true)
       statuses {}
-      jobs {}
-      status_count 0]
-
+      jobs {}]
+  (var status_count 0)
   (doto Luapack
         (tset "plugins" {})
         (tset "plugin_dir" (string.format "%s/.local/share/nvim/site/pack/luapack/opt/" (os.getenv "HOME"))))
@@ -62,22 +61,23 @@
           (if (= (vim.fn.index (vim.fn.readdir (.. plugpath "/doc")) "tags") -1)
             (vim.cmd (string.format "helptags ++t %s" (.. plugpath "/doc"))))))))
 
+  (fn update_status [name status]
+    (tset statuses name status)
+    (set status_count (+ status_count 1))
+    (redraw))
+
   (fn Luapack.install []
     (ensure_plugin_dir)
     (vim.cmd (string.format "vsplit | b%s" buffer))
     (each [_ x (ipairs (get_needed_plugins))]
-      (tset statuses (get_repo_name x) "downloading")
-      (local status_count (+ status_count 1))
-      (redraw)
+      (update_status (get_repo_name x) "downloading")
       (let [shell_cmd (string.format "git clone https://github.com/%s %s" (.. Luapack.plugin_dir (get_repo_name x)))]
         (run_cmd shell_cmd (get_repo_name x)))))
 
   (fn Luapack.update []
     (vim.cmd (string.format "vsplit | b%s" buffer))
     (each [_ x (ipairs (get_needed_plugins))]
-      (tset statuses (get_repo_name x) "updating")
-      (local status_count (+ status_count 1))
-      (redraw)
+      (update_status (get_repo_name x) "updating")
       (let [shell_cmd (string.format "cd %s && git pull" (.. Luapack.plugin_dir (get_repo_name x)))]
         (run_cmd shell_cmd (get_repo_name x)))))
   
@@ -92,9 +92,7 @@
           (table.insert plugins_to_remove plugin)))
       (vim.cmd (string.format "vsplit | b%s" buffer))
       (each [_ plugin (ipairs (plugins_to_remove))]
-        (tset statuses plugin "deleting")
-        (local status_count (+ status_count 1))
-        (redraw)
+        (update_status plugin "deleting")
         (let [shell_cmd (string.format "rm -fr %s" (.. Luapack.plugin_dir plugin))]
           (run_cmd shell_cmd plugin)))))
 
