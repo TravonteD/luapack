@@ -1,23 +1,23 @@
-(let [Luapack {}
+(let [Luapack {:plugins {}
+               :plugin_dir (string.format "%s/.local/share/nvim/site/pack/luapack/opt/" (os.getenv "HOME"))}
       buffer (vim.api.nvim_create_buf false true)
       statuses {}
       jobs {}]
   (var status_count 0)
-  (doto Luapack
-        (tset "plugins" {})
-        (tset "plugin_dir" (string.format "%s/.local/share/nvim/site/pack/luapack/opt/" (os.getenv "HOME"))))
 
   (fn ensure_plugin_dir []
     (if (= (vim.fn.isdirectory Luapack.plugin_dir) 0)
       (vim.fn.mkdir Luapack.plugin_dir "p")))
 
   (fn installed_plugins [] 
+    "An array of installed plugins"
     (vim.fn.readdir Luapack.plugin_dir))
 
   (fn get_repo_name [str]
     (str:gsub ".*/(.*)" "%1"))
 
   (fn get_needed_plugins []
+    "Returns the plugins that aren't already_installed"
     (let [already_installed (installed_plugins)
           to_be_installed []]
       (each [_ plugin (ipairs Luapack.plugins)]
@@ -85,7 +85,7 @@
     (let [plugins_to_remove []]
       (each [_ plugin (ipairs (installed_plugins))]
         (var to_delete true)
-        (each [_ x (ipairs plugins)]
+        (each [_ x (ipairs Luapack.plugins)]
           (if (= plugin (get_repo_name x))
             (set to_delete false)))
         (if to_delete

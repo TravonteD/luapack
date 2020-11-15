@@ -1,13 +1,8 @@
-local Luapack = {}
+local Luapack = {plugin_dir = string.format("%s/.local/share/nvim/site/pack/luapack/opt/", os.getenv("HOME")), plugins = {}}
 local buffer = vim.api.nvim_create_buf(false, true)
 local statuses = {}
 local jobs = {}
 local status_count = 0
-do
-  local _0_0 = Luapack
-  _0_0["plugins"] = {}
-  _0_0["plugin_dir"] = string.format("%s/.local/share/nvim/site/pack/luapack/opt/", os.getenv("HOME"))
-end
 local function ensure_plugin_dir()
   if (vim.fn.isdirectory(Luapack.plugin_dir) == 0) then
     return vim.fn.mkdir(Luapack.plugin_dir, "p")
@@ -39,20 +34,20 @@ local function redraw()
   local lines = {}
   for plugin, status in pairs(statuses) do
     do
-      local _1_0 = status
-      if (_1_0 == "deleting") then
+      local _0_0 = status
+      if (_0_0 == "deleting") then
         table.insert(lines, string.format("Deleting %s", plugin))
-      elseif (_1_0 == "updating") then
+      elseif (_0_0 == "updating") then
         table.insert(lines, string.format("Updating %s", plugin))
-      elseif (_1_0 == "downloading") then
+      elseif (_0_0 == "downloading") then
         table.insert(lines, string.format("Downloading %s", plugin))
-      elseif (_1_0 == "deleting_done") then
+      elseif (_0_0 == "deleting_done") then
         table.insert(lines, string.format("Deleting %s...done", plugin))
-      elseif (_1_0 == "updating_done") then
+      elseif (_0_0 == "updating_done") then
         table.insert(lines, string.format("Updating %s...done", plugin))
-      elseif (_1_0 == "downloading_done") then
+      elseif (_0_0 == "downloading_done") then
         table.insert(lines, string.format("Downloading %s...done", plugin))
-      elseif (_1_0 == "error") then
+      elseif (_0_0 == "error") then
         table.insert(lines, string.format("Downloading %s...error", plugin))
       end
     end
@@ -62,7 +57,7 @@ local function redraw()
 end
 local function run_cmd(cmd, name)
   local job_id = nil
-  local function _1_(id, code, _)
+  local function _0_(id, code, _)
     local name0 = jobs[id]
     if (code == 0) then
       statuses[name0] = string.format("%s_done", status.name)
@@ -71,7 +66,7 @@ local function run_cmd(cmd, name)
     end
     return redraw()
   end
-  job_id = vim.fn.jobstart(cmd, {on_exit = _1_})
+  job_id = vim.fn.jobstart(cmd, {on_exit = _0_})
   jobs[job_id] = name
   return nil
 end
@@ -115,7 +110,7 @@ Luapack.clean = function()
   local plugins_to_remove = {}
   for _, plugin in ipairs(installed_plugins()) do
     local to_delete = true
-    for _0, x in ipairs(plugins) do
+    for _0, x in ipairs(Luapack.plugins) do
       if (plugin == get_repo_name(x)) then
         to_delete = false
       end
