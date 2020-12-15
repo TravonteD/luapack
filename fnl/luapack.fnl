@@ -32,19 +32,21 @@
     (let [lines []]
       (each [plugin status (pairs statuses)]
         (match status
-          "deleting" (table.insert lines (string.format "Deleting %s" plugin))
+          "installed" (table.insert lines (string.format "Installing %s...already installed" plugin))
+          "removing" (table.insert lines (string.format "Removing %s" plugin))
           "updating" (table.insert lines (string.format "Updating %s" plugin))
-          "downloading" (table.insert lines (string.format "Downloading %s" plugin))
-          "deleting_done" (table.insert lines (string.format "Deleting %s...done" plugin))
+          "installing" (table.insert lines (string.format "Installing %s" plugin))
+          "removing_done" (table.insert lines (string.format "Removing %s...done" plugin))
           "updating_done" (table.insert lines (string.format "Updating %s...done" plugin))
-          "downloading_done" (table.insert lines (string.format "Downloading %s...done" plugin))
-          "error" (table.insert lines (string.format "Downloading %s...error" plugin))))
+          "installing_done" (table.insert lines (string.format "Installing %s...done" plugin))
+          "error" (table.insert lines (string.format "Installing %s...error" plugin))))
         (vim.api.nvim_buf_set_lines buffer 0 status_count false lines)))
 
   (fn run_cmd [cmd name]
-    (let [job_id (vim.fn.jobstart 
+    (let [job_id (vim.fn.jobstart
                    cmd 
                    {:on_exit (fn [id code _]
+                               (print (vim.inspect id))
                                 (let [name (. jobs id)]
                                   (if (= code 0)
                                     (tset statuses name (string.format "%s_done" (. statuses name)))
@@ -69,23 +71,30 @@
   (fn open_buffer []
     (vim.cmd (string.format "vsplit | b%s" buffer)))
 
+  (fn install_plugin [plugin]
+    (update_status (get_repo_name plugin) "installing")
+    (let [shell_cmd (string.format "git clone https://github.com/%s %s" plugin (.. Luapack.plugin_dir (get_repo_name plugin)))]
+      (run_cmd shell_cmd (get_repo_name plugin))))
+
+  (fn update_plugin [plugin]
+    (update_status (get_repo_name plugin) "updating")
+    (let [shell_cmd (string.format "cd %s && git pull" (.. Luapack.plugin_dir (get_repo_name plugin)))]
+      (run_cmd shell_cmd (get_repo_name plugin))))
+
   (fn Luapack.install []
     (ensure_plugin_dir)
     (open_buffer)
     (each [plugin installed? (pairs (get_needed_plugins))]
       (if installed?
         (update_status (get_repo_name plugin) "installed")
-        (do
-          (update_status (get_repo_name plugin) "downloading")
-          (let [shell_cmd (string.format "git clone https://github.com/%s %s" plugin (.. Luapack.plugin_dir (get_repo_name plugin)))]
-            (run_cmd shell_cmd (get_repo_name plugin)))))))
+        (install_plugin plugin))))
 
   (fn Luapack.update []
     (open_buffer)
-    (each [_ x (ipairs (get_needed_plugins))]
-      (update_status (get_repo_name x) "updating")
-      (let [shell_cmd (string.format "cd %s && git pull" (.. Luapack.plugin_dir (get_repo_name x)))]
-        (run_cmd shell_cmd (get_repo_name x)))))
+    (each [plugin installed? (pairs (get_needed_plugins))]
+      (if installed?
+        (update_plugin plugin)
+        (install_plugin plugin))))
   
   (fn Luapack.clean []
     (let [plugins_to_remove []]
@@ -97,8 +106,8 @@
         (if to_delete
           (table.insert plugins_to_remove plugin)))
       (open_buffer)
-      (each [_ plugin (ipairs (plugins_to_remove))]
-        (update_status plugin "deleting")
+      (each [_ plugin (ipairs plugins_to_remove)]
+        (update_status plugin "removing")
         (let [shell_cmd (string.format "rm -fr %s" (.. Luapack.plugin_dir plugin))]
           (run_cmd shell_cmd plugin)))))
 
