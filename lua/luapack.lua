@@ -68,12 +68,13 @@ local function run_cmd(cmd, name)
   return nil
 end
 local function load_helptags()
-  for _, plugin in ipairs(installed_plugins) do
+  for _, plugin in ipairs(installed_plugins()) do
     local plugpath = (Luapack.plugin_dir .. plugin)
     local dir = vim.fn.readdir(plugpath)
+    local doc_path = (plugpath .. "/doc")
     if (vim.fn.index(dir, "doc") ~= -1) then
-      if (vim.fn.index(vim.fn.readdir((plugpath .. "/doc")), "tags") == -1) then
-        vim.cmd(string.format("helptags ++t %s", (plugpath .. "/doc")))
+      if (vim.fn.index(vim.fn.readdir(doc_path), "tags") == -1) then
+        vim.cmd(string.format("helptags ++t %s", doc_path))
       end
     end
   end
@@ -89,7 +90,7 @@ Luapack.install = function()
   vim.cmd(string.format("vsplit | b%s", buffer))
   for _, x in ipairs(get_needed_plugins()) do
     update_status(get_repo_name(x), "downloading")
-    local shell_cmd = string.format("git clone https://github.com/%s %s", (Luapack.plugin_dir .. get_repo_name(x)))
+    local shell_cmd = string.format("git clone https://github.com/%s %s", x, (Luapack.plugin_dir .. get_repo_name(x)))
     run_cmd(shell_cmd, get_repo_name(x))
   end
   return nil

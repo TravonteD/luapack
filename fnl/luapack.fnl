@@ -52,12 +52,13 @@
       (tset jobs job_id name)))
 
   (fn load_helptags []
-    (each [_ plugin (ipairs installed_plugins)]
+    (each [_ plugin (ipairs (installed_plugins))]
       (let [plugpath (.. Luapack.plugin_dir plugin)
-            dir (vim.fn.readdir plugpath)]
+            dir (vim.fn.readdir plugpath)
+            doc_path (.. plugpath "/doc")]
         (if (not= (vim.fn.index dir "doc") -1)
-          (if (= (vim.fn.index (vim.fn.readdir (.. plugpath "/doc")) "tags") -1)
-            (vim.cmd (string.format "helptags ++t %s" (.. plugpath "/doc"))))))))
+          (if (= (vim.fn.index (vim.fn.readdir doc_path) "tags") -1)
+            (vim.cmd (string.format "helptags ++t %s" doc_path)))))))
 
   (fn update_status [name status]
     (tset statuses name status)
@@ -69,7 +70,7 @@
     (vim.cmd (string.format "vsplit | b%s" buffer))
     (each [_ x (ipairs (get_needed_plugins))]
       (update_status (get_repo_name x) "downloading")
-      (let [shell_cmd (string.format "git clone https://github.com/%s %s" (.. Luapack.plugin_dir (get_repo_name x)))]
+      (let [shell_cmd (string.format "git clone https://github.com/%s %s" x (.. Luapack.plugin_dir (get_repo_name x)))]
         (run_cmd shell_cmd (get_repo_name x)))))
 
   (fn Luapack.update []
