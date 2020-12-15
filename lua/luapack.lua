@@ -57,7 +57,7 @@ local function run_cmd(cmd, name)
   local function _0_(id, code, _)
     local name0 = jobs[id]
     if (code == 0) then
-      statuses[name0] = string.format("%s_done", status.name)
+      statuses[name0] = string.format("%s_done", statuses[name0])
     else
       statuses[name0] = "error"
     end

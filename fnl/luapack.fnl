@@ -43,10 +43,10 @@
   (fn run_cmd [cmd name]
     (let [job_id (vim.fn.jobstart 
                    cmd 
-                   {"on_exit" (fn [id code _]
+                   {:on_exit (fn [id code _]
                                 (let [name (. jobs id)]
                                   (if (= code 0)
-                                    (tset statuses name (string.format "%s_done" (. status "name")))
+                                    (tset statuses name (string.format "%s_done" (. statuses name)))
                                     (tset statuses name "error"))
                                   (redraw)))})]
       (tset jobs job_id name)))
