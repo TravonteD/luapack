@@ -25,9 +25,9 @@ local function get_needed_plugins()
       end
     end
     if installed_3f then
-      plugin_list[get_repo_name(plugin)] = true
+      plugin_list[plugin] = true
     else
-      plugin_list[get_repo_name(plugin)] = false
+      plugin_list[plugin] = false
     end
   end
   return plugin_list
@@ -93,13 +93,13 @@ end
 Luapack.install = function()
   ensure_plugin_dir()
   open_buffer()
-  for name, installed_3f in pairs(get_needed_plugins()) do
+  for plugin, installed_3f in pairs(get_needed_plugins()) do
     if installed_3f then
-      update_status(get_repo_name(x), "installed")
+      update_status(get_repo_name(plugin), "installed")
     else
-      update_status(get_repo_name(x), "downloading")
-      local shell_cmd = string.format("git clone https://github.com/%s %s", x, (Luapack.plugin_dir .. get_repo_name(x)))
-      run_cmd(shell_cmd, get_repo_name(x))
+      update_status(get_repo_name(plugin), "downloading")
+      local shell_cmd = string.format("git clone https://github.com/%s %s", plugin, (Luapack.plugin_dir .. get_repo_name(plugin)))
+      run_cmd(shell_cmd, get_repo_name(plugin))
     end
   end
   return nil

@@ -24,8 +24,8 @@
           (if (= x (get_repo_name plugin))
                  (set installed? true)))
         (if installed?
-          (tset plugin_list (get_repo_name plugin) true)
-          (tset plugin_list (get_repo_name plugin) false)))
+          (tset plugin_list plugin true)
+          (tset plugin_list plugin false)))
       plugin_list))
 
   (fn redraw []
@@ -72,13 +72,13 @@
   (fn Luapack.install []
     (ensure_plugin_dir)
     (open_buffer)
-    (each [name installed? (pairs (get_needed_plugins))]
+    (each [plugin installed? (pairs (get_needed_plugins))]
       (if installed?
-        (update_status (get_repo_name x) "installed")
+        (update_status (get_repo_name plugin) "installed")
         (do
-          (update_status (get_repo_name x) "downloading")
-          (let [shell_cmd (string.format "git clone https://github.com/%s %s" x (.. Luapack.plugin_dir (get_repo_name x)))]
-            (run_cmd shell_cmd (get_repo_name x)))))))
+          (update_status (get_repo_name plugin) "downloading")
+          (let [shell_cmd (string.format "git clone https://github.com/%s %s" plugin (.. Luapack.plugin_dir (get_repo_name plugin)))]
+            (run_cmd shell_cmd (get_repo_name plugin)))))))
 
   (fn Luapack.update []
     (open_buffer)
