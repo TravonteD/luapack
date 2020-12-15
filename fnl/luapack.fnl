@@ -10,22 +10,20 @@
       (vim.fn.mkdir Luapack.plugin_dir "p")))
 
   (fn installed_plugins [] 
-    "An array of installed plugins"
     (vim.fn.readdir Luapack.plugin_dir))
 
   (fn get_repo_name [str]
     (str:gsub ".*/(.*)" "%1"))
 
   (fn get_needed_plugins []
-    "Returns the plugins that aren't already_installed"
     (let [already_installed (installed_plugins)
           to_be_installed []]
       (each [_ plugin (ipairs Luapack.plugins)]
-        (var needed false)
+        (var needed? true)
         (each [_ x (ipairs already_installed)]
           (if (= x (get_repo_name plugin))
-                 (set needed true)))
-        (if (not needed)
+                 (set needed? false)))
+        (if needed?
           (table.insert to_be_installed plugin)))
       to_be_installed))
 
@@ -39,8 +37,8 @@
           "deleting_done" (table.insert lines (string.format "Deleting %s...done" plugin))
           "updating_done" (table.insert lines (string.format "Updating %s...done" plugin))
           "downloading_done" (table.insert lines (string.format "Downloading %s...done" plugin))
-          "error" (table.insert lines (string.format "Downloading %s...error" plugin)))
-        (vim.api.nvim_buf_set_lines buffer 0 status_count false lines))))
+          "error" (table.insert lines (string.format "Downloading %s...error" plugin))))
+        (vim.api.nvim_buf_set_lines buffer 0 status_count false lines)))
 
   (fn run_cmd [cmd name]
     (let [job_id (vim.fn.jobstart 

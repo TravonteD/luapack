@@ -18,13 +18,13 @@ local function get_needed_plugins()
   local already_installed = installed_plugins()
   local to_be_installed = {}
   for _, plugin in ipairs(Luapack.plugins) do
-    local needed = false
+    local needed_3f = true
     for _0, x in ipairs(already_installed) do
       if (x == get_repo_name(plugin)) then
-        needed = true
+        needed_3f = false
       end
     end
-    if not needed then
+    if needed_3f then
       table.insert(to_be_installed, plugin)
     end
   end
@@ -33,27 +33,24 @@ end
 local function redraw()
   local lines = {}
   for plugin, status in pairs(statuses) do
-    do
-      local _0_0 = status
-      if (_0_0 == "deleting") then
-        table.insert(lines, string.format("Deleting %s", plugin))
-      elseif (_0_0 == "updating") then
-        table.insert(lines, string.format("Updating %s", plugin))
-      elseif (_0_0 == "downloading") then
-        table.insert(lines, string.format("Downloading %s", plugin))
-      elseif (_0_0 == "deleting_done") then
-        table.insert(lines, string.format("Deleting %s...done", plugin))
-      elseif (_0_0 == "updating_done") then
-        table.insert(lines, string.format("Updating %s...done", plugin))
-      elseif (_0_0 == "downloading_done") then
-        table.insert(lines, string.format("Downloading %s...done", plugin))
-      elseif (_0_0 == "error") then
-        table.insert(lines, string.format("Downloading %s...error", plugin))
-      end
+    local _0_0 = status
+    if (_0_0 == "deleting") then
+      table.insert(lines, string.format("Deleting %s", plugin))
+    elseif (_0_0 == "updating") then
+      table.insert(lines, string.format("Updating %s", plugin))
+    elseif (_0_0 == "downloading") then
+      table.insert(lines, string.format("Downloading %s", plugin))
+    elseif (_0_0 == "deleting_done") then
+      table.insert(lines, string.format("Deleting %s...done", plugin))
+    elseif (_0_0 == "updating_done") then
+      table.insert(lines, string.format("Updating %s...done", plugin))
+    elseif (_0_0 == "downloading_done") then
+      table.insert(lines, string.format("Downloading %s...done", plugin))
+    elseif (_0_0 == "error") then
+      table.insert(lines, string.format("Downloading %s...error", plugin))
     end
-    vim.api.nvim_buf_set_lines(buffer, 0, status_count, false, lines)
   end
-  return nil
+  return vim.api.nvim_buf_set_lines(buffer, 0, status_count, false, lines)
 end
 local function run_cmd(cmd, name)
   local job_id = nil
