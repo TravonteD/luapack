@@ -15,20 +15,22 @@ local function get_repo_name(str)
   return str:gsub(".*/(.*)", "%1")
 end
 local function get_needed_plugins()
-  local already_installed = installed_plugins()
-  local to_be_installed = {}
+  local installed_plugins0 = installed_plugins()
+  local plugin_list = {}
   for _, plugin in ipairs(Luapack.plugins) do
-    local needed_3f = true
-    for _0, x in ipairs(already_installed) do
+    local installed_3f = false
+    for _0, x in ipairs(installed_plugins0) do
       if (x == get_repo_name(plugin)) then
-        needed_3f = false
+        installed_3f = true
       end
     end
-    if needed_3f then
-      table.insert(to_be_installed, plugin)
+    if installed_3f then
+      plugin_list[get_repo_name(plugin)] = true
+    else
+      plugin_list[get_repo_name(plugin)] = false
     end
   end
-  return to_be_installed
+  return plugin_list
 end
 local function redraw()
   local lines = {}
@@ -91,10 +93,14 @@ end
 Luapack.install = function()
   ensure_plugin_dir()
   open_buffer()
-  for _, x in ipairs(get_needed_plugins()) do
-    update_status(get_repo_name(x), "downloading")
-    local shell_cmd = string.format("git clone https://github.com/%s %s", x, (Luapack.plugin_dir .. get_repo_name(x)))
-    run_cmd(shell_cmd, get_repo_name(x))
+  for name, installed_3f in pairs(get_needed_plugins()) do
+    if installed_3f then
+      update_status(get_repo_name(x), "installed")
+    else
+      update_status(get_repo_name(x), "downloading")
+      local shell_cmd = string.format("git clone https://github.com/%s %s", x, (Luapack.plugin_dir .. get_repo_name(x)))
+      run_cmd(shell_cmd, get_repo_name(x))
+    end
   end
   return nil
 end

@@ -16,16 +16,17 @@
     (str:gsub ".*/(.*)" "%1"))
 
   (fn get_needed_plugins []
-    (let [already_installed (installed_plugins)
-          to_be_installed []]
+    (let [installed_plugins (installed_plugins)
+          plugin_list {}]
       (each [_ plugin (ipairs Luapack.plugins)]
-        (var needed? true)
-        (each [_ x (ipairs already_installed)]
+        (var installed? false)
+        (each [_ x (ipairs installed_plugins)]
           (if (= x (get_repo_name plugin))
-                 (set needed? false)))
-        (if needed?
-          (table.insert to_be_installed plugin)))
-      to_be_installed))
+                 (set installed? true)))
+        (if installed?
+          (tset plugin_list (get_repo_name plugin) true)
+          (tset plugin_list (get_repo_name plugin) false)))
+      plugin_list))
 
   (fn redraw []
     (let [lines []]
@@ -71,10 +72,13 @@
   (fn Luapack.install []
     (ensure_plugin_dir)
     (open_buffer)
-    (each [_ x (ipairs (get_needed_plugins))]
-      (update_status (get_repo_name x) "downloading")
-      (let [shell_cmd (string.format "git clone https://github.com/%s %s" x (.. Luapack.plugin_dir (get_repo_name x)))]
-        (run_cmd shell_cmd (get_repo_name x)))))
+    (each [name installed? (pairs (get_needed_plugins))]
+      (if installed?
+        (update_status (get_repo_name x) "installed")
+        (do
+          (update_status (get_repo_name x) "downloading")
+          (let [shell_cmd (string.format "git clone https://github.com/%s %s" x (.. Luapack.plugin_dir (get_repo_name x)))]
+            (run_cmd shell_cmd (get_repo_name x)))))))
 
   (fn Luapack.update []
     (open_buffer)
