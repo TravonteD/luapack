@@ -85,9 +85,12 @@ local function update_status(name, status)
   status_count = (status_count + 1)
   return redraw()
 end
+local function open_buffer()
+  return vim.cmd(string.format("vsplit | b%s", buffer))
+end
 Luapack.install = function()
   ensure_plugin_dir()
-  vim.cmd(string.format("vsplit | b%s", buffer))
+  open_buffer()
   for _, x in ipairs(get_needed_plugins()) do
     update_status(get_repo_name(x), "downloading")
     local shell_cmd = string.format("git clone https://github.com/%s %s", x, (Luapack.plugin_dir .. get_repo_name(x)))
@@ -96,7 +99,7 @@ Luapack.install = function()
   return nil
 end
 Luapack.update = function()
-  vim.cmd(string.format("vsplit | b%s", buffer))
+  open_buffer()
   for _, x in ipairs(get_needed_plugins()) do
     update_status(get_repo_name(x), "updating")
     local shell_cmd = string.format("cd %s && git pull", (Luapack.plugin_dir .. get_repo_name(x)))
@@ -117,7 +120,7 @@ Luapack.clean = function()
       table.insert(plugins_to_remove, plugin)
     end
   end
-  vim.cmd(string.format("vsplit | b%s", buffer))
+  open_buffer()
   for _, plugin in ipairs(plugins_to_remove()) do
     update_status(plugin, "deleting")
     local shell_cmd = string.format("rm -fr %s", (Luapack.plugin_dir .. plugin))

@@ -65,16 +65,19 @@
     (set status_count (+ status_count 1))
     (redraw))
 
+  (fn open_buffer []
+    (vim.cmd (string.format "vsplit | b%s" buffer)))
+
   (fn Luapack.install []
     (ensure_plugin_dir)
-    (vim.cmd (string.format "vsplit | b%s" buffer))
+    (open_buffer)
     (each [_ x (ipairs (get_needed_plugins))]
       (update_status (get_repo_name x) "downloading")
       (let [shell_cmd (string.format "git clone https://github.com/%s %s" x (.. Luapack.plugin_dir (get_repo_name x)))]
         (run_cmd shell_cmd (get_repo_name x)))))
 
   (fn Luapack.update []
-    (vim.cmd (string.format "vsplit | b%s" buffer))
+    (open_buffer)
     (each [_ x (ipairs (get_needed_plugins))]
       (update_status (get_repo_name x) "updating")
       (let [shell_cmd (string.format "cd %s && git pull" (.. Luapack.plugin_dir (get_repo_name x)))]
@@ -89,7 +92,7 @@
             (set to_delete false)))
         (if to_delete
           (table.insert plugins_to_remove plugin)))
-      (vim.cmd (string.format "vsplit | b%s" buffer))
+      (open_buffer)
       (each [_ plugin (ipairs (plugins_to_remove))]
         (update_status plugin "deleting")
         (let [shell_cmd (string.format "rm -fr %s" (.. Luapack.plugin_dir plugin))]
