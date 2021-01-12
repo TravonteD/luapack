@@ -149,7 +149,7 @@ Luapack.clean = function()
 end
 Luapack.load = function()
   for _, plugin in ipairs(installed_plugins()) do
-    vim.cmd(string.format("packadd %s", plugin))
+    pcall(vim.cmd, string.format("packadd %s", plugin))
   end
   return nil
 end

@@ -113,5 +113,5 @@
 
   (fn Luapack.load []
     (each [_ plugin (ipairs (installed_plugins))]
-      (vim.cmd (string.format "packadd %s" plugin))))
+      (pcall vim.cmd (string.format "packadd %s" plugin))))
   Luapack)
